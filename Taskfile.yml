@@ -1,0 +1,88 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  # DEMO_DATABASE: KAMESHS_DUCKDB_ICEBERG_DEMO
+  SCHEMA_NAME: PUBLIC
+  TABLE_NAME: fruits
+  EXTERNAL_VOLUME_NAME:
+    sh: echo "$EXTERNAL_VOLUME_NAME"
+
+dotenv:
+  - .env
+
+tasks:
+  default:
+    cmds:
+      - task: create-external-volume
+      - task: create-or-rotate-pat
+      - task: setup-snowflake
+
+  create-external-volume:
+    cmds:
+      - snow-utils extvolume:create
+
+  create-or-rotate-pat:
+    deps:
+      - setup-snowflake
+    cmds:
+      - |
+        snow-utils pat:create \
+          SA_USER={{.SA_USER}} \
+          SA_ROLE={{.SA_ROLE}} \
+          SA_ADMIN_ROLE={{.SA_ADMIN_ROLE}} \
+          -- \
+          --db {{.PAT_OBJECTS_DB}}
+
+  setup-snowflake:
+    cmds:
+      - |
+        snow sql -f 01.snowflake_setup.sql  \
+          --enable-templating ALL \
+          --variable database_name={{.DEMO_DATABASE}} \
+          --variable snowflake_user={{.SNOWFLAKE_USER}} \
+          --variable sa_role={{.SA_ROLE}} \
+          --variable external_volume_name={{upper .EXTERNAL_VOLUME_NAME}}
+
+  setup-rbac:
+    cmds:
+      - |
+        snow sql -f 02.rbac.sql \
+        --enable-templating ALL \
+        --variable database_name={{.DEMO_DATABASE}} \
+        --variable schema={{.SCHEMA_NAME}} \
+        --variable table={{.TABLE_NAME}} \
+        --variable sa_role={{.SA_ROLE}}
+
+  setup-pat:
+    cmds:
+      - |
+        snow sql -f 03.pat.sql \
+        --enable-templating ALL \
+        --variable database_name={{.DEMO_DATABASE}} \
+        --variable schema={{.SCHEMA_NAME}} \
+        --variable table={{.TABLE_NAME}} \
+        --variable sa_role={{.SA_ROLE}}
+
+  get-access-token:
+    cmds:
+      - |
+        AUTH_HEADER=$(echo -n "${SNOWFLAKE_PASSWORD}" | base64 | tr -d '\n')
+        http -v --form POST https://sfdevrel-sfdevrel-enterprise.snowflakecomputing.com/polaris/api/catalog/v1/oauth/tokens \
+          accept:"application/json" \
+          Authorization:"Basic :${AUTH_HEADER}" \
+          client_id='' \
+          client_secret="${SNOWFLAKE_PASSWORD}" \
+          grant_type='client_credentials' \
+          scope="session:role:${SA_ROLE}"
+
+  test-pat:
+    cmds:
+      - |
+        snow sql -x -q "SHOW TABLES" \
+          --user {{.SA_USER}} \
+          --account {{.SNOWFLAKE_ACCOUNT}} \
+          --dbname {{.DEMO_DATABASE}} \
+          --schema {{.SCHEMA_NAME}} \
+          --role {{.SA_ROLE}}
