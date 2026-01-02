@@ -14,16 +14,19 @@ dotenv:
 
 tasks:
   default:
+    desc: Run full setup (external volume, Snowflake objects, and PAT)
     cmds:
       - task: create-external-volume
       - task: create-or-rotate-pat
       - task: setup-snowflake
 
   create-external-volume:
+    desc: Create an external volume for Iceberg table storage
     cmds:
       - snow-utils extvolume:create
 
   create-or-rotate-pat:
+    desc: Create or rotate PAT token for Horizon Catalog authentication
     deps:
       - setup-snowflake
     cmds:
@@ -36,6 +39,7 @@ tasks:
           --db {{.PAT_OBJECTS_DB}}
 
   setup-snowflake:
+    desc: Set up database, roles, and external volume configuration
     cmds:
       - |
         snow sql -f 01.snowflake_setup.sql  \
@@ -46,6 +50,7 @@ tasks:
           --variable external_volume_name={{upper .EXTERNAL_VOLUME_NAME}}
 
   setup-rbac:
+    desc: Grant SELECT access on Iceberg tables to the service account role
     cmds:
       - |
         snow sql -f 02.rbac.sql \
@@ -55,7 +60,17 @@ tasks:
         --variable table={{.TABLE_NAME}} \
         --variable sa_role={{.SA_ROLE}}
 
+  create-sample-data:
+    desc: Create a sample Iceberg table with test data
+    cmds:
+      - |
+        snow sql -f 03.sample_data.sql \
+        --enable-templating ALL \
+        --variable database_name={{.DEMO_DATABASE}} \
+        --variable external_volume_name={{upper .EXTERNAL_VOLUME_NAME}}
+
   setup-pat:
+    desc: Run PAT setup SQL script
     cmds:
       - |
         snow sql -f 03.pat.sql \
@@ -66,6 +81,7 @@ tasks:
         --variable sa_role={{.SA_ROLE}}
 
   get-access-token:
+    desc: Exchange PAT for an OAuth2 access token (for debugging)
     cmds:
       - |
         AUTH_HEADER=$(echo -n "${SNOWFLAKE_PASSWORD}" | base64 | tr -d '\n')
@@ -78,6 +94,7 @@ tasks:
           scope="session:role:${SA_ROLE}"
 
   test-pat:
+    desc: Verify PAT works by running a simple query as the service account
     cmds:
       - |
         snow sql -x -q "SHOW TABLES" \

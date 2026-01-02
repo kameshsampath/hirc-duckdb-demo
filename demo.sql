@@ -1,33 +1,34 @@
-SET enable_http_logging = true;
+-- Query Snowflake Iceberg tables with DuckDB via Horizon Catalog
+--
+-- Usage: 
+--   source .env && envsubst < demo.sql | duckdb
+--
+-- Or manually replace $DEMO_DATABASE, $SNOWFLAKE_ACCOUNT_URL, and $SA_ROLE
 
 INSTALL iceberg;
 INSTALL httpfs;
 LOAD iceberg;
 LOAD httpfs;
 
-SET VARIABLE pat_token = getenv('SNOWFLAKE_PASSWORD');
-SET VARIABLE catalog_uri = getenv('SNOWFLAKE_ACCOUNT_URL') || '/polaris/api/catalog';
-SET VARIABLE oauth2_server_uri = getvariable('catalog_uri') || '/v1/oauth/tokens';
-SET VARIABLE oauth_scope = 'session:role:' || getenv('SA_ROLE');
-
--- || getenv('SA_ROLE');
-
+-- Create secret for PAT authentication
 CREATE OR REPLACE SECRET snowflake_secret ( 
     TYPE iceberg, 
     CLIENT_ID '',
-    CLIENT_SECRET getvariable('pat_token'),
-    OAUTH2_SERVER_URI getvariable('oauth2_server_uri'),
+    CLIENT_SECRET getenv('SNOWFLAKE_PASSWORD'),
+    OAUTH2_SERVER_URI '$SNOWFLAKE_ACCOUNT_URL/polaris/api/catalog/v1/oauth/tokens',
     OAUTH2_GRANT_TYPE 'client_credentials',
-    OAUTH2_SCOPE getvariable('oauth_scope')
+    OAUTH2_SCOPE 'session:role:$SA_ROLE'
 );
 
--- Note: Run this file using: duckdb -bail -c ".read demo.sql" or use envsubst
--- The ATTACH statement requires a literal string, so we use shell substitution
-
-ATTACH 'KAMESHS_DUCKDB_ICEBERG_DEMO' AS snowflake_catalog (
+-- Attach to Snowflake database via Horizon Catalog
+ATTACH '$DEMO_DATABASE' AS snowflake_catalog (
     TYPE iceberg,
     SECRET snowflake_secret,
-    ENDPOINT getvariable('catalog_uri')
+    ENDPOINT '$SNOWFLAKE_ACCOUNT_URL/polaris/api/catalog'
 );
 
+-- List all available tables
 SHOW ALL TABLES;
+
+-- Example query (uncomment and modify):
+-- SELECT * FROM snowflake_catalog.PUBLIC.fruits LIMIT 10;
