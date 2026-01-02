@@ -229,3 +229,9 @@ Make sure `GRANT SELECT` was run for each table you want to query. The service a
 - [snow-bin-utils](https://github.com/kameshsampath/snow-bin-utils)
 - [DuckDB Iceberg extension](https://duckdb.org/docs/extensions/iceberg.html)
 - [Snowflake CLI](https://docs.snowflake.com/en/developer-guide/snowflake-cli/index)
+
+## License
+
+Copyright 2026 Kamesh Sampath
+
+Licensed under the Apache License 2.0 — see [LICENSE](LICENSE) for details.
