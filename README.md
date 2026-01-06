@@ -42,6 +42,24 @@ scoop install task gettext
 choco install go-task gettext
 ```
 
+### Installing snow-bin-utils
+
+[snow-bin-utils](https://github.com/kameshsampath/snow-bin-utils) automates Snowflake infrastructure setup (external volumes, PATs, policies).
+
+```bash
+# Clone the repo
+git clone https://github.com/kameshsampath/snow-bin-utils.git
+cd snow-bin-utils
+
+# Add to your PATH (add this to your ~/.bashrc or ~/.zshrc)
+export PATH="$PATH:$(pwd)"
+
+# Verify installation
+snow-utils --help
+```
+
+See the [full installation guide](https://github.com/kameshsampath/snow-bin-utils?tab=readme-ov-file#installation) for more details.
+
 ### AWS Requirements
 
 You need an AWS account with permissions to:
