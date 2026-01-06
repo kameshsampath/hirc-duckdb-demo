@@ -153,7 +153,7 @@ uv venv && source .venv/bin/activate && uv sync
 Open `workbook.ipynb` in Jupyter, or run the CLI version:
 
 ```bash
-source .env && envsubst < demo.sql | duckdb
+source .env && envsubst < demo.sql | duckdb -bail 
 ```
 
 > [!WARNING]
@@ -176,7 +176,7 @@ GRANT SELECT ON TABLE $DEMO_DATABASE.PUBLIC.FRUITS TO ROLE $SA_ROLE;
 ### 7. Run the Demo Again (Success!)
 
 ```bash
-source .env && envsubst < demo.sql | duckdb 
+source .env && envsubst < demo.sql | duckdb -bail
 ```
 
 This time it should work! 🎉

@@ -15,5 +15,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ipykernel>=7.1.0",
+    "nbstripout>=0.8.2",
     "python-dotenv>=1.2.1",
 ]
