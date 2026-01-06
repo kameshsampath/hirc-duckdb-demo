@@ -16,6 +16,7 @@ This demo walks through setting it up with DuckDB.
 ### Tools
 
 - [Snowflake CLI](https://docs.snowflake.com/en/developer-guide/snowflake-cli/index) (`snow`)
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) with credentials configured
 - [snow-bin-utils](https://github.com/kameshsampath/snow-bin-utils) for automating Snowflake object setup
 - [Task](https://taskfile.dev/) for running the automation scripts
 - [gettext](https://www.gnu.org/software/gettext/) for `envsubst` (used by the DuckDB CLI demo)
@@ -41,11 +42,28 @@ scoop install task gettext
 choco install go-task gettext
 ```
 
+### AWS Requirements
+
+You need an AWS account with permissions to:
+
+- Create and manage S3 buckets
+- Create IAM policies and roles (for Snowflake external volume trust relationship)
+
+Verify your AWS credentials are configured:
+
+```bash
+aws sts get-caller-identity
+```
+
+> [!IMPORTANT]
+> This command must succeed before proceeding to step 2.
+
 ### Snowflake Requirements
 
-- A [Snowflake account](https://bit.ly/snow-india-meetups) (free trial works!)
-- An [External Volume](https://docs.snowflake.com/en/sql-reference/sql/create-external-volume) pointing to S3, Azure, or GCS
-- Some [Snowflake-managed Iceberg tables](https://docs.snowflake.com/en/user-guide/tables-iceberg-create) to query (or use the sample data task below)
+- A [Snowflake account](https://bit.ly/snow-india-meetups) with `ACCOUNTADMIN` role (or equivalent privileges to create roles, databases, external volumes, network policies, authentication policies, and network rules)
+
+> [!TIP]
+> For simplicity, we recommend using a [Snowflake Free Trial](https://bit.ly/snow-india-meetups) with `ACCOUNTADMIN` for this demo.
 
 ## Getting Started
 
@@ -58,11 +76,15 @@ cp env.example .env
 Fill in your details:
 
 ```bash
+# AWS credentials
+AWS_PROFILE=default
+
+# Snowflake settings
 SNOWFLAKE_ACCOUNT=myorg-myaccount
 SNOWFLAKE_ACCOUNT_URL=https://myorg-myaccount.snowflakecomputing.com
-SNOWFLAKE_USER=kamesh
+SNOWFLAKE_USER=your snowflake username
 
-# This will hold your PAT token after step 2
+# Leave empty - will be auto-populated
 SNOWFLAKE_PASSWORD=
 
 DEMO_DATABASE=MY_ICEBERG_DB
@@ -81,23 +103,25 @@ PAT_OBJECTS_DB=pat_admin
 
 ### 2. Set Up Snowflake Objects
 
-If you have `snow-bin-utils` installed, this is straightforward:
-
 ```bash
-# Create external volume (if you don't have one)
+# Create external volume (creates S3 bucket and IAM roles)
 task create-external-volume
 
 # Set up database and roles
 task setup-snowflake
 
-# Generate a PAT token for authentication
+# Generate PAT token for authentication
 task create-or-rotate-pat
 ```
 
-> [!TIP]
-> The PAT task will update your `.env` file with the token automatically.
-
-If you prefer doing it manually, check the SQL files in this repo and run them with `snow sql`.
+> [!NOTE]
+> The `create-or-rotate-pat` task creates:
+>
+> - A [Programmatic Access Token (PAT)](https://docs.snowflake.com/en/user-guide/programmatic-access-tokens)
+> - A [Network Policy](https://docs.snowflake.com/en/user-guide/network-policies) allowing only your current public IP
+> - An [Authentication Policy](https://docs.snowflake.com/en/user-guide/authentication-policies) for the service account
+>
+> The PAT is automatically saved to your `.env` file.
 
 ### 3. Create Sample Data (Optional)
 
@@ -107,21 +131,10 @@ If you don't have existing Iceberg tables, create a sample one:
 task create-sample-data
 ```
 
-This creates a `fruits` table with some test data. Since DuckDB can't write to Iceberg tables through Horizon Catalog, we create data via Snowflake first.
+> [!IMPORTANT]
+> This creates a `FRUITS` table with test data. Since DuckDB can't write to Iceberg tables through Horizon Catalog, we create data via Snowflake first.
 
-### 4. Grant Access to Your Tables
-
-```bash
-task setup-rbac
-```
-
-Or manually grant SELECT on any tables you want to query:
-
-```sql
-GRANT SELECT ON TABLE my_db.my_schema.my_table TO ROLE iceberg_reader_role;
-```
-
-### 5. Fire Up Python
+### 4. Fire Up Python
 
 With direnv:
 
@@ -135,13 +148,38 @@ Or manually:
 uv venv && source .venv/bin/activate && uv sync
 ```
 
-### 6. Run the Demo
+### 5. Run the Demo (Expect it to fail!)
 
 Open `workbook.ipynb` in Jupyter, or run the CLI version:
 
 ```bash
 source .env && envsubst < demo.sql | duckdb
 ```
+
+> [!WARNING]
+> This will fail with a permissions error! The service account role doesn't have access to the tables yet. This is intentional—proceed to step 6.
+
+### 6. Grant Access to Your Tables
+
+Now grant the service account role access to your tables:
+
+```bash
+task setup-rbac
+```
+
+Or manually:
+
+```sql
+GRANT SELECT ON TABLE $DEMO_DATABASE.PUBLIC.FRUITS TO ROLE $SA_ROLE;
+```
+
+### 7. Run the Demo Again (Success!)
+
+```bash
+source .env && envsubst < demo.sql | duckdb 
+```
+
+This time it should work! 🎉
 
 ## How It Works
 
@@ -166,7 +204,7 @@ ATTACH 'MY_ICEBERG_DB' AS sf (
 );
 
 -- And you're off to the races
-SELECT * FROM sf.my_schema.my_table LIMIT 10;
+SELECT * FROM sf.PUBLIC.FRUITS LIMIT 10;
 ```
 
 Horizon handles vending temporary cloud credentials so DuckDB can read directly from your object storage.
@@ -179,6 +217,22 @@ Horizon handles vending temporary cloud credentials so DuckDB can read directly 
 > - External reads work on **Iceberg v2 or earlier** only
 > - Tables with [row access policies](https://docs.snowflake.com/en/user-guide/security-row-intro) or [masking policies](https://docs.snowflake.com/en/user-guide/security-column-intro) aren't accessible via Horizon
 > - Only **Snowflake-managed** Iceberg tables are supported (not externally managed or Delta/Parquet Direct)
+> - **Case sensitivity**: Snowflake identifiers are UPPERCASE—use `PUBLIC.FRUITS`, not `public.fruits`
+
+## Cleanup
+
+To remove all resources created by this demo:
+
+```bash
+task cleanup
+```
+
+This will prompt for confirmation and then remove:
+
+- The demo database and all its tables
+- The service account role
+- The external volume (S3 bucket and IAM roles)
+- The PAT token and associated policies
 
 ## Troubleshooting
 
@@ -210,7 +264,7 @@ CREATE OR REPLACE SECRET http_proxy (
 
 - Check your PAT hasn't expired: `snow-utils snow:pats`
 - Verify the role is granted to the user
-- Ensure network policies allow your IP
+- Ensure network policies allow your IP (the PAT task restricts to your current public IP)
 
 ### "Role not found" errors
 
@@ -219,6 +273,18 @@ Role names with hyphens (`-`) aren't supported. Use underscores instead.
 ### Can't see tables
 
 Make sure `GRANT SELECT` was run for each table you want to query. The service account role needs explicit access.
+
+### "Table does not exist" but SHOW TABLES works
+
+Snowflake identifiers are **case-sensitive** when querying via DuckDB. Use uppercase:
+
+```sql
+-- ❌ Wrong
+SELECT * FROM snowflake_catalog.public.fruits;
+
+-- ✅ Correct
+SELECT * FROM snowflake_catalog.PUBLIC.FRUITS;
+```
 
 ## Links
 

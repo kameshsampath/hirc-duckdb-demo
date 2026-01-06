@@ -24,11 +24,12 @@ CREATE OR REPLACE SECRET snowflake_secret (
 ATTACH '$DEMO_DATABASE' AS snowflake_catalog (
     TYPE iceberg,
     SECRET snowflake_secret,
-    ENDPOINT '$SNOWFLAKE_ACCOUNT_URL/polaris/api/catalog'
+    ENDPOINT '$SNOWFLAKE_ACCOUNT_URL/polaris/api/catalog',
+    SUPPORT_NESTED_NAMESPACES false
 );
 
 -- List all available tables
 SHOW ALL TABLES;
 
--- Example query (uncomment and modify):
--- SELECT * FROM snowflake_catalog.PUBLIC.fruits LIMIT 10;
+-- Example query (note: Snowflake identifiers are case sensitive and should be in uppercase. Check the results from previous command)
+SELECT * FROM snowflake_catalog.PUBLIC.FRUITS LIMIT 5;

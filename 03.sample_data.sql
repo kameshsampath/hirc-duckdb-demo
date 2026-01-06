@@ -8,14 +8,15 @@
 --     --variable database_name=$DEMO_DATABASE \
 --     --variable external_volume_name=$EXTERNAL_VOLUME_NAME
 
+USE ROLE ACCOUNTADMIN;
 USE DATABASE {{database_name}};
 USE SCHEMA PUBLIC;
 
 -- Create a simple Iceberg table
 CREATE OR REPLACE ICEBERG TABLE fruits (
     id INT,
-    name VARCHAR(100),
-    color VARCHAR(50),
+    name VARCHAR,
+    color VARCHAR,
     price DECIMAL(10,2),
     in_stock BOOLEAN
 )

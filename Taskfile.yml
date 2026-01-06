@@ -103,3 +103,22 @@ tasks:
           --dbname {{.DEMO_DATABASE}} \
           --schema {{.SCHEMA_NAME}} \
           --role {{.SA_ROLE}}
+
+  cleanup:
+    desc: Remove all demo resources (database, role, external volume, PAT) - USE WITH CAUTION
+    prompt: This will DELETE the database {{.DEMO_DATABASE}}, role {{.SA_ROLE}}, external volume, and PAT. Continue?
+    cmds:
+      - |
+        snow sql -f cleanup.sql \
+          --enable-templating ALL \
+          --variable database_name={{.DEMO_DATABASE}} \
+          --variable sa_role={{.SA_ROLE}} \
+          --variable sa_user={{.SA_USER}}
+      - snow-utils extvolume:delete
+      - |
+        snow-utils pat:remove \
+          SA_USER={{.SA_USER}} \
+          SA_ROLE={{.SA_ROLE}} \
+          SA_ADMIN_ROLE={{.SA_ADMIN_ROLE}} \
+          -- \
+          --db {{.PAT_OBJECTS_DB}}
