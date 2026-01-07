@@ -2,6 +2,11 @@
 
 A quick demo showing how to query Snowflake-managed Iceberg tables using DuckDB through the [Horizon Iceberg REST Catalog](https://docs.snowflake.com/en/user-guide/tables-iceberg-query-using-external-query-engine-snowflake-horizon).
 
+## Demo videos
+
+- [Install `snow-bin-utils` (Snow Utils)](https://youtu.be/zEzf-Rpv8Dc)
+- [Horizon Iceberg REST Catalog demo (DuckDB + Snowflake-managed Iceberg)](https://youtu.be/W-kMEGMbS44)
+
 ## What's This About?
 
 Snowflake's Horizon Catalog now exposes Iceberg REST APIs, which means you can use external query engines like DuckDB, Spark, or Trino to read your Snowflake-managed Iceberg tables directly. No data copying, no ETL—just point your engine at Horizon and query away.
@@ -306,6 +311,8 @@ SELECT * FROM snowflake_catalog.PUBLIC.FRUITS;
 
 ## Links
 
+- [Install `snow-bin-utils` (video)](https://youtu.be/zEzf-Rpv8Dc)
+- [Horizon Iceberg REST Catalog demo (video)](https://youtu.be/W-kMEGMbS44)
 - [Unlock Open Interoperability with Horizon Catalog](https://medium.com/snowflake/unlock-open-interoperability-with-horizon-catalog-89ae67b7ee66) — great intro blog post
 - [Horizon Catalog docs](https://docs.snowflake.com/en/user-guide/tables-iceberg-query-using-external-query-engine-snowflake-horizon)
 - [Iceberg tables in Snowflake](https://docs.snowflake.com/en/user-guide/tables-iceberg)
