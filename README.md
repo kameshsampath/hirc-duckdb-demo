@@ -2,10 +2,14 @@
 
 A quick demo showing how to query Snowflake-managed Iceberg tables using DuckDB through the [Horizon Iceberg REST Catalog](https://docs.snowflake.com/en/user-guide/tables-iceberg-query-using-external-query-engine-snowflake-horizon).
 
-## Demo videos
 
-- [Install `snow-bin-utils` (Snow Utils)](https://youtu.be/zEzf-Rpv8Dc)
-- [Horizon Iceberg REST Catalog demo (DuckDB + Snowflake-managed Iceberg)](https://youtu.be/W-kMEGMbS44)
+---
+
+## 🎬 Demo Video
+
+[![Watch the Demo](https://img.shields.io/badge/YouTube-Watch%20Demo-red?style=for-the-badge&logo=youtube)]([https://youtu.be/fbCA06cdUTU](https://youtu.be/vpbUbh4KRwo))
+
+---
 
 ## What's This About?
 
@@ -22,7 +26,7 @@ This demo walks through setting it up with DuckDB.
 
 - [Snowflake CLI](https://docs.snowflake.com/en/developer-guide/snowflake-cli/index) (`snow`)
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) with credentials configured
-- [snow-bin-utils](https://github.com/kameshsampath/snow-bin-utils) for automating Snowflake object setup
+- [snow-bin-utils](https://github.com/kameshsampath/snow-bin-utils) for automating Snowflake object setup, check [Install `snow-bin-utils` (Snow Utils)](https://youtu.be/zEzf-Rpv8Dc)
 - [Task](https://taskfile.dev/) for running the automation scripts
 - [gettext](https://www.gnu.org/software/gettext/) for `envsubst` (used by the DuckDB CLI demo)
 - Python 3.12+ with [uv](https://docs.astral.sh/uv/)
