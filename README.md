@@ -7,7 +7,7 @@ A quick demo showing how to query Snowflake-managed Iceberg tables using DuckDB 
 
 ## 🎬 Demo Video
 
-[![Watch the Demo](https://img.shields.io/badge/YouTube-Watch%20Demo-red?style=for-the-badge&logo=youtube)]([https://youtu.be/fbCA06cdUTU](https://youtu.be/vpbUbh4KRwo))
+[![Watch the Demo](https://img.shields.io/badge/YouTube-Watch%20Demo-red?style=for-the-badge&logo=youtube)](https://youtu.be/vpbUbh4KRwo)
 
 ---
 
